@@ -4,6 +4,7 @@
 #include <malloc.h>
 #include <fileio.h>
 #include <stdio.h>
+#include <screenshot.h>
 
 #include <libjpg.h>
 #include "jpeglib.h"
@@ -311,5 +312,103 @@ void jpgClose(jpgData *jpg) {
   if (priv->data) free(priv->data);
   free(priv);
   free(jpg);
+}
+
+#define PS2SS_GSPSMCT32           0
+#define PS2SS_GSPSMCT24           1
+#define PS2SS_GSPSMCT16           2
+
+int jpgScreenshot( const char* pFilename,unsigned int VramAdress,
+                         unsigned int Width, unsigned int Height, unsigned int Psm )
+{
+  s32 file_handle;
+  u32 y;
+  static u32 in_buffer[1024*4];  // max 1024*32bit for a line, should be ok
+  u8 *out_buffer;
+  u8 *p_out;
+  jpgData *jpg;
+  u8 *data;
+  int ret;
+
+  file_handle = fioOpen( pFilename, O_CREAT|O_WRONLY );
+
+  // make sure we could open the file for output
+
+  if( file_handle < 0 )
+    return 0;
+
+  out_buffer = malloc( Width*Height*3 );
+  if( out_buffer == NULL )
+    return 0;
+  p_out = out_buffer;
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Check if we have a tempbuffer, if we do we use it 
+
+  for( y = 0; y < Height; y++ )
+  {
+    ps2_screenshot( in_buffer, VramAdress, 0, y, Width, 1, Psm );
+
+    if( Psm == PS2SS_GSPSMCT16 )
+    {
+      u32 x;
+      u16* p_in  = (u16*)&in_buffer;
+        
+      for( x = 0; x < Width; x++ )
+      {
+	 u32 r = (p_in[x] & 31) << 3;
+	 u32 g = ((p_in[x] >> 5) & 31) << 3;
+	 u32 b = ((p_in[x] >> 10) & 31) << 3;
+         p_out[x*3+0] = r;
+         p_out[x*3+1] = g;
+         p_out[x*3+2] = b;
+      }
+    }
+    else
+    if( Psm == PS2SS_GSPSMCT24 )
+    {
+      u32 x;
+      u8* p_in  = (u8*)&in_buffer;
+        
+      for( x = 0; x < Width; x++ )
+      {
+        u8 r =  *p_in++;
+        u8 g =  *p_in++;
+        u8 b =  *p_in++;
+        p_out[x*3+0] = r;
+        p_out[x*3+1] = g;
+        p_out[x*3+2] = b;
+      }
+    }
+    else
+    {
+       u8 *p_in = (u8 *) &in_buffer;
+       u32 x;
+
+       for(x = 0; x < Width; x++)
+       {
+	  u8 r = *p_in++;
+	  u8 g = *p_in++;
+	  u8 b = *p_in++;
+	  *p_in++;
+          p_out[x*3+0] = r;
+          p_out[x*3+1] = g;
+          p_out[x*3+2] = b;
+       }
+    }
+
+    p_out+= Width*3;
+  }
+
+  jpg = jpgCreateRAW(out_buffer, Width, Height, 24);
+  ret = jpgCompressImageRAW(jpg, &data);
+  fioWrite( file_handle, data, ret );
+  jpgClose(jpg);
+
+  fioClose( file_handle );
+
+  free(out_buffer);
+
+  return 0;
 }
 

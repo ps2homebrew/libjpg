@@ -19,5 +19,7 @@ int      jpgCompressImage(jpgData *jpg);
 int      jpgCompressImageRAW(jpgData *jpg, u8 **dest);
 int      jpgReadImage(jpgData *jpg, u8 *dest);
 void     jpgClose(jpgData *jpg);
+int      jpgScreenshot(const char* pFilename,unsigned int VramAdress,
+		       unsigned int Width, unsigned int Height, unsigned int Psm);
 
 #endif /* __LIBJPG_H__ */
