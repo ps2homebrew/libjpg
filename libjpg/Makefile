@@ -7,7 +7,7 @@ CLIBOBJECTS= jcapimin.o jcapistd.o jctrans.o jcparam.o jdatadst.o jcinit.o \
         jcsample.o jchuff.o jcphuff.o jcdctmgr.o jfdctfst.o jfdctflt.o \
         jfdctint.o
 # decompression library object files
-DLIBOBJECTS= jdapimin.o jdapistd.o jdtrans.o jdatasrc.o jdmaster.o \
+DLIBOBJECTS= jdapimin.o jdapistd.o jdtrans.o jdmaster.o \
         jdinput.o jdmarker.o jdhuff.o jdphuff.o jdmainct.o jdcoefct.o \
         jdpostct.o jddctmgr.o jidctfst.o jidctflt.o jidctint.o jidctred.o \
         jdsample.o jdcolor.o jquant1.o jquant2.o jdmerge.o
@@ -25,6 +25,5 @@ all: $(EE_LIB)
 clean:
 	rm -f *.elf *.o *.a
 
-include $(PS2SDKSRC)/Defs.make
-include $(PS2SDKSRC)/ee/Rules.make
-include $(PS2SDKSRC)/ee/Rules.release
+include $(PS2SDK)/samples/Makefile.pref
+include $(PS2SDK)/samples/Makefile.eeglobal

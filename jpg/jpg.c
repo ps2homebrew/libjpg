@@ -9,21 +9,21 @@
 
 #include "jpegtest.h"
 
-GSGLOBAL gsGlobal;
+GSGLOBAL *gsGlobal;
 
 void displayjpeg(jpgData *jpg) {
 	GSTEXTURE tex;
 	u8 *data;
 	int i;
 
-	data = malloc(jpg->width * jpg->color_components * jpg->height);
+	data = malloc(jpg->width * jpg->height * (jpg->bpp/8));
 	jpgReadImage(jpg, data);
 	tex.Width =  jpg->width;
 	tex.Height = jpg->height;
 	tex.PSM = GS_PSM_CT24;
 	tex.Vram = 0;
 	tex.Mem = data;
-	gsKit_texture_upload(&gsGlobal, &tex);
+	gsKit_texture_upload(gsGlobal, &tex);
 	jpgClose(jpg);
 	free(data);
 
@@ -43,42 +43,9 @@ int main() {
 	// Initialize the DMAC
 	dmaKit_chan_init(DMA_CHANNEL_GIF);
 
-	/* Generic Values */
-	gsGlobal.Mode = GS_MODE_NTSC;
-	gsGlobal.Interlace = GS_NONINTERLACED;
-	gsGlobal.Field = GS_FRAME;
-	gsGlobal.Aspect = GS_ASPECT_4_3;
-	gsGlobal.Width = 640;
-	gsGlobal.Height = 448;
-	gsGlobal.OffsetX = 2048;
-	gsGlobal.OffsetY = 2048;
-	gsGlobal.StartX = -5;
-	gsGlobal.StartY = -5;
-	gsGlobal.PSM = GS_PSM_CT32;
-	gsGlobal.PSMZ = GS_PSMZ_16;
-	gsGlobal.ActiveBuffer = 1;
-	gsGlobal.PrimFogEnable = 0;
-	gsGlobal.PrimAAEnable = 0;
-	gsGlobal.PrimAlphaEnable = 1;
-	gsGlobal.PrimAlpha = 1;
-	gsGlobal.PrimContext = 0;
-
-	/* BGColor Register Values */
-	gsGlobal.BGColor.Red = 0x00;
-	gsGlobal.BGColor.Green = 0x00;
-	gsGlobal.BGColor.Blue = 0x0;
-
-	/* TEST Register Values */
-	gsGlobal.Test.ATE = 0;
-	gsGlobal.Test.ATST = 1;
-	gsGlobal.Test.AREF = 0x80;
-	gsGlobal.Test.AFAIL = 0;
-	gsGlobal.Test.DATE = 0;
-	gsGlobal.Test.DATM = 0;
-	gsGlobal.Test.ZTE = 1;
-	gsGlobal.Test.ZTST = 2;
-
-	gsKit_init_screen(&gsGlobal);
+	gsGlobal = gsKit_init_global(GS_MODE_NTSC);
+	gsGlobal->PSM = GS_PSM_CT24;
+	gsKit_init_screen(gsGlobal);
 
 
 	printf("display raw jpeg\n");
@@ -97,13 +64,16 @@ int main() {
 		displayjpeg(jpg);
 	}
 
-	printf("display host0:test.jpg\n");
-	jpg = jpgOpen("host0:test.jpg");
+	printf("display host0:testorig.jpg\n");
+	jpg = jpgOpen("host0:testorig.jpg");
 	if (jpg == NULL) {
-		printf("error opening host0:test.jpg\n");
+		printf("error opening host0:testorig.jpg\n");
 	} else {
 		displayjpeg(jpg);
 	}
+
+	printf("create screenshot file host0:screen.jpg\n");
+	ps2_screenshot_jpg("host0:screen.jpg", 0, 640, 480, GS_PSM_CT32);
 
 	return 0;
 }

@@ -2,22 +2,21 @@
 #define __LIBJPG_H__
 
 #include <tamtypes.h>
-#include <jpeglib.h>
 
 typedef struct {
 	int width;
 	int height;
-	int color_components;
+	int bpp;
 
-	/* libjpg private fields */
-	struct jpeg_decompress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-	JSAMPLE *buffer;
-	u8 *data;
+	void *priv;
 } jpgData;
 
 jpgData *jpgOpen(char *filename);
 jpgData *jpgOpenRAW(u8 *data, int size);
+jpgData *jpgCreate(char *filename, u8 *data, int width, int height, int bpp);
+jpgData *jpgCreateRAW(u8 *data, int width, int height, int bpp);
+int      jpgCompressImage(jpgData *jpg);
+int      jpgCompressImageRAW(jpgData *jpg, u8 **dest);
 int      jpgReadImage(jpgData *jpg, u8 *dest);
 void     jpgClose(jpgData *jpg);
 

@@ -80,7 +80,9 @@ typedef huff_entropy_encoder * huff_entropy_ptr;
 typedef struct {
   JOCTET * next_output_byte;	/* => next byte to write in buffer */
   size_t free_in_buffer;	/* # of byte spaces remaining in buffer */
+  int p[4];
   savable_state cur;		/* Current bit buffer & DC state */
+  int pad[8];
   j_compress_ptr cinfo;		/* dump_buffer needs access to this */
 } working_state;
 
@@ -476,7 +478,7 @@ METHODDEF(boolean)
 encode_mcu_huff (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
 {
   huff_entropy_ptr entropy = (huff_entropy_ptr) cinfo->entropy;
-  working_state state;
+  static working_state state;
   int blkn, ci;
   jpeg_component_info * compptr;
 
