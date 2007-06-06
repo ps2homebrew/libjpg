@@ -2,7 +2,6 @@
 #include <kernel.h>
 #include <string.h>
 #include <malloc.h>
-#include <fileio.h>
 #include <stdio.h>
 #include <screenshot.h>
 
@@ -32,23 +31,23 @@ typedef struct {
   u8 *dest;
 } jpgPrivate;
 
-int dLog=0;
+FILE* dLog=0;
 
 void __Log(char *fmt, ...) {
 	char buf[1024];
 	va_list list;
 
 /*	if (dLog == 0) {
-		dLog = fioOpen("host:dLog.txt", O_CREAT | O_WRONLY);
+		dLog = fopen("host:dLog.txt", "w");
 	}
 */			
 	va_start(list, fmt);
 	vsprintf(buf, fmt, list);
 	va_end(list);
 	printf("%s", buf);
-//	fioWrite(dLog, buf, strlen(buf));
+//	fwrite( buf, strlen(buf), 1, dLog);
 
-//	fioClose(dLog);
+//	fclose(dLog);
 }
 
 
@@ -145,19 +144,19 @@ jpgData *jpgOpen(char *filename) {
   jpgPrivate *priv;
   u8 *data;
   int size;
-  int fd;
+  FILE* file;
 
-  fd = fioOpen(filename, O_RDONLY);
-  if (fd == -1) {
+  file = fopen(filename, "r");
+  if (file == 0) {
     printf("jpgOpen: error opening '%s'\n", filename);
     return NULL;
   }
-  size = fioLseek(fd, 0, SEEK_END);
-  fioLseek(fd, 0, SEEK_SET);
+  size = fseek(file, 0, SEEK_END);
+  fseek(file, 0, SEEK_SET);
   data = (u8*)malloc(size);
   if (data == NULL) return NULL;
-  fioRead(fd, data, size);
-  fioClose(fd);
+  fread(data, size, 1, file);
+  fclose(file);
 
   jpg = jpgOpenRAW(data, size);
   if (jpg == NULL) return NULL;
@@ -321,7 +320,7 @@ void jpgClose(jpgData *jpg) {
 int jpgScreenshot( const char* pFilename,unsigned int VramAdress,
                          unsigned int Width, unsigned int Height, unsigned int Psm )
 {
-  s32 file_handle;
+  FILE* file_handle;
   u32 y;
   static u32 in_buffer[1024*4];  // max 1024*32bit for a line, should be ok
   u8 *out_buffer;
@@ -330,11 +329,11 @@ int jpgScreenshot( const char* pFilename,unsigned int VramAdress,
   u8 *data;
   int ret;
 
-  file_handle = fioOpen( pFilename, O_CREAT|O_WRONLY );
+  file_handle = fopen( pFilename, "w" );
 
   // make sure we could open the file for output
 
-  if( file_handle < 0 )
+  if( file_handle == 0 )
     return 0;
 
   out_buffer = malloc( Width*Height*3 );
@@ -402,10 +401,10 @@ int jpgScreenshot( const char* pFilename,unsigned int VramAdress,
 
   jpg = jpgCreateRAW(out_buffer, Width, Height, 24);
   ret = jpgCompressImageRAW(jpg, &data);
-  fioWrite( file_handle, data, ret );
+  fwrite( data, ret, 1, file_handle );
   jpgClose(jpg);
 
-  fioClose( file_handle );
+  fclose( file_handle );
 
   free(out_buffer);
 
