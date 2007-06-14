@@ -1,5 +1,5 @@
 EE_BIN = jpg.elf
-EE_OBJS = jpg.o jpegtest.o screenshot.o
+EE_OBJS = jpg.o jpegtest.o
 EE_INCS = -I$(LIBJPG)/include
 EE_LIBS = -L$(LIBJPG)/lib  -ljpg
 

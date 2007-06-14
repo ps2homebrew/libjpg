@@ -6,6 +6,7 @@
 #include <libjpg.h>
 #include <gsKit.h>
 #include <dmaKit.h>
+#include <stdio.h>
 
 #include "jpegtest.h"
 
@@ -22,7 +23,7 @@ void displayjpeg(jpgData *jpg) {
 	tex.Height = jpg->height;
 	tex.PSM = GS_PSM_CT24;
 	tex.Vram = 0;
-	tex.Mem = data;
+	tex.Mem = (u32*) data;
 	gsKit_texture_upload(gsGlobal, &tex);
 	jpgClose(jpg);
 	free(data);
@@ -36,9 +37,11 @@ int main() {
 	jpgData *jpg;
 
 	SifInitRpc(0);
+    
+    printf("start\n");
 
-	dmaKit_init(D_CTRL_RELE_ON,D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
-		    D_CTRL_STD_OFF, D_CTRL_RCYC_8);
+	dmaKit_init(D_CTRL_RELE_ON, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC,
+		    D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
 
 	// Initialize the DMAC
 	dmaKit_chan_init(DMA_CHANNEL_GIF);
@@ -73,7 +76,9 @@ int main() {
 	}
 
 	printf("create screenshot file host0:screen.jpg\n");
-	ps2_screenshot_jpg("host0:screen.jpg", 0, 640, 480, GS_PSM_CT32);
+	//ps2_screenshot_jpg("host0:screen.jpg", 0, 640, 480, GS_PSM_CT32);
+    jpgScreenshot("host0:screen.jpg", gsGlobal->CurrentPointer,
+                             gsGlobal->Width, gsGlobal->Height, gsGlobal->PSM);
 
 	return 0;
 }
